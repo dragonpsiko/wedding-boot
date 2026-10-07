@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtual Photobooth Wedding</title>
+  <title>Kathakala Photobooth</title>
   <style>
     * {
       box-sizing: border-box;
@@ -54,7 +54,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Mirror view untuk kamera depan */
+      transform: scaleX(-1);
     }
 
     .frame-overlay {
@@ -64,13 +64,13 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      object-fit: cover;
+      object-fit: contain;
     }
 
     .controls {
-      margin-top: 20px;
+      margin-top: 15px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
       max-width: 360px;
     }
@@ -83,7 +83,6 @@
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .btn-capture {
@@ -91,14 +90,10 @@
       color: white;
     }
 
-    .btn-capture:active {
-      background-color: #6e5443;
-    }
-
     .btn-switch {
       background-color: #e2d7cd;
       color: #4a3b32;
-      flex: 0.4;
+      flex: 0.35;
     }
 
     .result-container {
@@ -148,16 +143,13 @@
 <body>
 
   <header>
-    <!-- Ganti nama pengantin & judul sesuai keinginanmu -->
-    <h1>Romeo & Juliet</h1>
+    <h1>Kathakala</h1>
     <p>Virtual Photobooth — Scan, Snap & Download</p>
   </header>
 
-  <!-- Live Camera Screen -->
   <div id="booth-screen">
     <div class="booth-container">
       <video id="webcam" autoplay playsinline></video>
-      <!-- Pastikan file frame PNG kamu bernama frame.png dan berada di folder yang sama -->
       <img id="frame-img" class="frame-overlay" src="frame.png" alt="Frame Wedding">
     </div>
 
@@ -167,10 +159,9 @@
     </div>
   </div>
 
-  <!-- Result Screen -->
   <div id="result-screen" class="result-container">
     <img id="photo-result" alt="Hasil Foto">
-    <a id="download-link" class="btn-download" download="wedding-photo.png">📥 Simpan Foto</a>
+    <a id="download-link" class="btn-download" download="kathakala-photo.png">📥 Simpan Foto</a>
     <button class="btn-retake" onclick="resetPhoto()">🔄 Foto Ulang</button>
     <p id="upload-status"></p>
   </div>
@@ -187,13 +178,11 @@
     const resultScreen = document.getElementById('result-screen');
     const uploadStatus = document.getElementById('upload-status');
 
-    // PASTE WEB APP URL DARI GOOGLE APPS SCRIPT DI DALAM TANDA PETIK DI BAWAH INI
-    const GOOGLE_SCRIPT_URL = "PASTE_WEB_APP_URL_GOOGLE_APPS_SCRIPT_DISINI";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKzgjeXSZo1l7q1hGmHs7kwQSEJulvpVIOYmhvbi4drJClS0o6C_0X2sDrIkBRsCrP_A/exec";
 
     let currentStream = null;
-    let facingMode = "user"; // "user" untuk kamera depan, "environment" untuk kamera belakang
+    let facingMode = "user";
 
-    // Inisialisasi Kamera
     async function startCamera() {
       if (currentStream) {
         currentStream.getTracks().forEach(track => track.stop());
@@ -212,18 +201,16 @@
       }
     }
 
-    // Ganti Kamera Depan / Belakang
     function switchCamera() {
       facingMode = facingMode === "user" ? "environment" : "user";
       video.style.transform = facingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
       startCamera();
     }
 
-    // Tangkap Foto & Gabungkan dengan Frame
     function takePhoto() {
       const context = canvas.getContext('2d');
-      const renderWidth = 1080;
-      const renderHeight = 1440;
+      const renderWidth = frameImg.naturalWidth || 1080;
+      const renderHeight = frameImg.naturalHeight || 1440;
       
       canvas.width = renderWidth;
       canvas.height = renderHeight;
@@ -253,7 +240,6 @@
       context.drawImage(video, sx, sy, sw, sh, 0, 0, renderWidth, renderHeight);
       context.restore();
 
-      // Menimpa hasil jepretan dengan Frame PNG
       context.drawImage(frameImg, 0, 0, renderWidth, renderHeight);
 
       const imageData = canvas.toDataURL('image/png');
@@ -263,16 +249,11 @@
       boothScreen.style.display = "none";
       resultScreen.style.display = "flex";
 
-      // Kirim otomatis ke Google Drive
       uploadToGoogleDrive(imageData);
     }
 
-    // Kirim Foto ke Google Apps Script / Drive
     function uploadToGoogleDrive(base64Image) {
-      if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbzKzgjeXSZo1l7q1hGmHs7kwQSEJulvpVIOYmhvbi4drJClS0o6C_0X2sDrIkBRsCrP_A/exec")) {
-        console.log("URL Google Apps Script belum diisi.");
-        return;
-      }
+      if (!GOOGLE_SCRIPT_URL) return;
 
       uploadStatus.innerText = "Menyimpan ke album acara...";
 
@@ -295,7 +276,6 @@
       });
     }
 
-    // Ulang Foto
     function resetPhoto() {
       uploadStatus.innerText = "";
       resultScreen.style.display = "none";
