@@ -69,7 +69,7 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      object-fit: fill; /* Menyesuaikan frame tepat di atas area 3:4 */
+      object-fit: fill;
     }
 
     .controls {
@@ -166,7 +166,7 @@
 
   <div id="result-screen" class="result-container">
     <img id="photo-result" alt="Hasil Foto">
-    <a id="download-link" class="btn-download" download="kathakala-photo.png">📥 Simpan Foto</a>
+    <a id="download-link" class="btn-download" download="kathakala-photo.jpg">📥 Simpan Foto</a>
     <button class="btn-retake" onclick="resetPhoto()">🔄 Foto Ulang</button>
     <p id="upload-status"></p>
   </div>
@@ -194,7 +194,6 @@
       }
 
       try {
-        // Meminta resolusi HD/Full-HD agar hasil jernih dan tidak noisy
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { 
             facingMode: facingMode, 
@@ -220,22 +219,23 @@
     function takePhoto() {
       const context = canvas.getContext('2d');
       
-      // Ukuran HD standar rasio 3:4 (1080 x 1440 px)
       const renderWidth = 1080;
       const renderHeight = 1440;
       
       canvas.width = renderWidth;
       canvas.height = renderHeight;
 
+      // Fitur smoothing/pemulusan gambar
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+
       context.save();
       
-      // Efek cermin jika pakai kamera depan
       if (facingMode === "user") {
         context.translate(renderWidth, 0);
         context.scale(-1, 1);
       }
       
-      // Menggambar tangkapan kamera 4:3 utuh ke canvas
       const videoRatio = video.videoWidth / video.videoHeight;
       const canvasRatio = renderWidth / renderHeight;
       let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
@@ -251,10 +251,13 @@
       context.drawImage(video, sx, sy, sw, sh, 0, 0, renderWidth, renderHeight);
       context.restore();
 
-      // Menimpa dengan Frame PNG transparan
-      context.drawImage(frameImg, 0, 0, renderWidth, renderHeight);
+      // Gambar frame jika file frame.png ter-load dengan baik
+      if (frameImg.complete && frameImg.naturalWidth !== 0) {
+        context.drawImage(frameImg, 0, 0, renderWidth, renderHeight);
+      }
 
-      const imageData = canvas.toDataURL('image/png');
+      // Format JPEG kualitas tinggi (0.95) untuk mengurangi efek pasir/noise
+      const imageData = canvas.toDataURL('image/jpeg', 0.95);
       photoResult.src = imageData;
       downloadLink.href = imageData;
 
